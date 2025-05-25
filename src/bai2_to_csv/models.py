@@ -4,7 +4,7 @@ This module contains Pydantic models representing the BAI2 file structure.
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -44,7 +44,7 @@ class ConfiguredBaseModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @field_validator("*", mode="before")
-    def convert_numeric_to_string(cls, v):
+    def convert_numeric_to_string(cls, v: Any) -> Any:
         """Convert numeric values to strings to preserve leading zeros."""
         if isinstance(v, (int, float)):
             return str(v)

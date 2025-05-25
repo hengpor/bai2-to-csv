@@ -15,7 +15,7 @@ def sample_bai2_path() -> Path:
     return current_dir / "data" / "sample.bai"
 
 
-def test_convert_file(tmp_path: Path, sample_bai2_path):
+def test_convert_file(tmp_path: Path, sample_bai2_path: Path) -> None:
     """Test converting a BAI2 file to CSV."""
     converter = Bai2Converter()
     summary_path = tmp_path / "summary.csv"
@@ -54,7 +54,7 @@ def test_convert_file(tmp_path: Path, sample_bai2_path):
     assert detail_df["amount"].iloc[0] == "0525"
 
 
-def test_convert_to_dataframes(sample_bai2_path):
+def test_convert_to_dataframes(sample_bai2_path: Path) -> None:
     """Test converting a BAI2 file to DataFrames without saving."""
     converter = Bai2Converter()
     summary_df, detail_df = converter.convert_to_dataframes(str(sample_bai2_path))
@@ -84,14 +84,14 @@ def test_convert_to_dataframes(sample_bai2_path):
     assert detail_df["customer_reference"].iloc[0] == "123456"
 
 
-def test_file_not_found():
+def test_file_not_found() -> None:
     """Test handling of non-existent input file."""
     converter = Bai2Converter()
     with pytest.raises(FileNotFoundError):
         converter.convert_to_dataframes("nonexistent.bai2")
 
 
-def test_empty_file(tmp_path: Path):
+def test_empty_file(tmp_path: Path) -> None:
     """Test handling of empty input file."""
     empty_file = tmp_path / "empty.bai"
     empty_file.touch()
@@ -101,7 +101,7 @@ def test_empty_file(tmp_path: Path):
         converter.convert_to_dataframes(str(empty_file))
 
 
-def test_invalid_bai2_format(tmp_path: Path):
+def test_invalid_bai2_format(tmp_path: Path) -> None:
     """Test handling of invalid BAI2 format."""
     invalid_file = tmp_path / "invalid.bai"
     with open(invalid_file, "w") as f:
