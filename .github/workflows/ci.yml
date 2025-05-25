@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v4
@@ -21,30 +21,33 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[dev]"
+        poetry install
 
     - name: Check formatting with black
       run: |
-        black --check src tests
+        poetry run black --check src tests
 
     - name: Check imports with isort
       run: |
-        isort --check-only src tests
+        poetry run isort --check-only src tests
 
     - name: Lint with flake8
       run: |
-        flake8 src tests
+        poetry run flake8 src tests
 
     - name: Type check with mypy
       run: |
-        mypy src tests
+        poetry run mypy src tests
 
     - name: Run tests with pytest
       run: |
-        pytest tests/ -v --cov=src --cov-report=xml
+        poetry run pytest tests/ -v --cov=src --cov-report=term-missing
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
