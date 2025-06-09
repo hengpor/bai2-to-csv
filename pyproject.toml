@@ -1,21 +1,46 @@
 [tool.poetry]
 name = "bai2-to-csv"
 version = "0.1.0"
-description = "A Python library to convert BAI2 files to CSV format"
-authors = ["Your Name <your.email@example.com>"]
+description = "A Python library for converting Bank Administration Institute (BAI2) files to CSV format"
+authors = ["porh <heng.porr@gmail.com>"]
+maintainers = ["porh <heng.porr@gmail.com>"]
 readme = "README.md"
 license = "MIT"
+homepage = "https://github.com/hengpor/bai2-to-csv"
+repository = "https://github.com/hengpor/bai2-to-csv"
+documentation = "https://github.com/hengpor/bai2-to-csv/blob/main/README.md"
 packages = [{include = "bai2_to_csv", from = "src"}]
-keywords = ["bai2", "csv", "banking", "finance"]
+keywords = ["bai2", "csv", "banking", "finance", "file-conversion", "data-processing"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Filters",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+include = [
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+exclude = [
+    "tests",
+    "docs",
+    "*.pyc",
+    "*.pyo",
+    "*~",
+    "__pycache__",
 ]
 
 [tool.poetry.dependencies]
@@ -36,6 +61,7 @@ isort = ">=6.0.1"
 mypy = ">=1.15.0"
 flake8 = ">=7.2.0"
 coverage = ">=7.8.2"
+twine = ">=6.0.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -126,3 +152,9 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 ignore_missing_imports = true
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/yourusername/bai2-to-csv/issues"
+"Changelog" = "https://github.com/yourusername/bai2-to-csv/blob/main/CHANGELOG.md"
+"Documentation" = "https://github.com/yourusername/bai2-to-csv#readme"
+"Source Code" = "https://github.com/yourusername/bai2-to-csv"

@@ -1,0 +1,126 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (leave empty for current version)'
+        required: false
+        type: string
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Configure Poetry
+      run: |
+        poetry config virtualenvs.create true
+        poetry config virtualenvs.in-project true
+
+    - name: Cache Poetry dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          venv-${{ matrix.python-version }}-
+
+    - name: Install dependencies
+      run: |
+        poetry install --with dev
+
+    - name: Run quality checks
+      run: |
+        poetry run black --check src tests
+        poetry run isort --check-only src tests
+        poetry run flake8 src tests
+        poetry run mypy src tests
+
+    - name: Run tests
+      run: |
+        poetry run pytest tests/ -v \
+          --cov=src/bai2_to_csv \
+          --cov-report=term-missing \
+          --cov-fail-under=80
+
+  build-and-publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Configure Poetry
+      run: |
+        poetry config virtualenvs.create true
+        poetry config virtualenvs.in-project true
+
+    - name: Install dependencies
+      run: |
+        poetry install --with dev
+
+    - name: Update version (if specified)
+      if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+      run: |
+        poetry version ${{ inputs.version }}
+
+    - name: Build package
+      run: |
+        poetry build
+
+    - name: Check package
+      run: |
+        poetry run twine check dist/*
+
+    - name: Publish to Test PyPI
+      if: github.event_name == 'workflow_dispatch'
+      env:
+        POETRY_PYPI_TOKEN_TESTPYPI: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      run: |
+        poetry config repositories.testpypi https://test.pypi.org/legacy/
+        poetry config pypi-token.testpypi $POETRY_PYPI_TOKEN_TESTPYPI
+        poetry publish --repository testpypi
+
+    - name: Publish to PyPI
+      if: github.event_name == 'release'
+      env:
+        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        poetry config pypi-token.pypi $POETRY_PYPI_TOKEN_PYPI
+        poetry publish
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+        retention-days: 90

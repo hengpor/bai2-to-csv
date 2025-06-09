@@ -1,7 +1,7 @@
 """Tests for the BAI2 to CSV converter."""
 
 from pathlib import Path
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -78,7 +78,8 @@ class TestBai2Converter:
 
         # Verify specific values from the sample file
         assert summary_df["customer_account"].iloc[0] == "1234567890"
-        # Currency code is the 4th field in the account identifier line: 03,1234567890,00000000,0,USD,10000/
+        # Currency code is the 4th field in the account identifier
+        # line: 03,1234567890,00000000,0,USD,10000/
         assert summary_df["currency_code"].iloc[0] == "USD"
 
         # Check detail DataFrame
@@ -103,8 +104,8 @@ class TestBai2Converter:
         # Convert the file using Path objects
         result_summary, result_detail = converter.convert_file(
             sample_bai2_path,  # Path object
-            summary_path,      # Path object
-            detail_path,       # Path object
+            summary_path,  # Path object
+            detail_path,  # Path object
         )
 
         # Check that files were created
@@ -185,7 +186,7 @@ class TestBai2Converter:
         test_file.write_text("01,test/")
 
         # Mock the parser to return None
-        with patch.object(converter.parser, 'parse', return_value=None):
+        with patch.object(converter.parser, "parse", return_value=None):
             summary_path = tmp_path / "summary.csv"
             detail_path = tmp_path / "detail.csv"
 
@@ -199,7 +200,7 @@ class TestBai2Converter:
         test_file.write_text("01,test/")
 
         # Mock the parser to return None
-        with patch.object(converter.parser, 'parse', return_value=None):
+        with patch.object(converter.parser, "parse", return_value=None):
             with pytest.raises(ValueError, match="Failed to parse BAI2 file"):
                 converter.convert_to_dataframes(str(test_file))
 
@@ -210,7 +211,7 @@ class TestBai2Converter:
         test_file.write_text("01,test/")
 
         # Mock the parser to raise an exception
-        with patch.object(converter.parser, 'parse', side_effect=Exception("Parser error")):
+        with patch.object(converter.parser, "parse", side_effect=Exception("Parser error")):
             summary_path = tmp_path / "summary.csv"
             detail_path = tmp_path / "detail.csv"
 
@@ -224,7 +225,7 @@ class TestBai2Converter:
         test_file.write_text("01,test/")
 
         # Mock the parser to raise an exception
-        with patch.object(converter.parser, 'parse', side_effect=Exception("Parser error")):
+        with patch.object(converter.parser, "parse", side_effect=Exception("Parser error")):
             with pytest.raises(ValueError, match="Failed to parse BAI2 file: Parser error"):
                 converter.convert_to_dataframes(str(test_file))
 
@@ -242,10 +243,10 @@ class TestBai2Converter:
 
         # Check that all columns are strings
         for col in summary_df.columns:
-            assert summary_df[col].dtype == 'object'
+            assert summary_df[col].dtype == "object"
 
         for col in detail_df.columns:
-            assert detail_df[col].dtype == 'object'
+            assert detail_df[col].dtype == "object"
 
         # Check specific formatting
         assert summary_df["file_header_sender_id"].iloc[0] == "000000610"  # Leading zeros preserved
@@ -259,10 +260,10 @@ class TestBai2Converter:
         # Note: The specific formatting depends on the implementation
         # We're checking that they are strings, not numeric types
         for col in summary_df.columns:
-            assert summary_df[col].dtype == 'object'
+            assert summary_df[col].dtype == "object"
 
         for col in detail_df.columns:
-            assert detail_df[col].dtype == 'object'
+            assert detail_df[col].dtype == "object"
 
     def test_csv_output_format(self, tmp_path: Path, sample_bai2_path):
         """Test the format of CSV output files."""
@@ -281,8 +282,8 @@ class TestBai2Converter:
         assert detail_content.startswith("file_header_sender_id,")
 
         # Check that files have data rows
-        summary_lines = summary_content.strip().split('\n')
-        detail_lines = detail_content.strip().split('\n')
+        summary_lines = summary_content.strip().split("\n")
+        detail_lines = detail_content.strip().split("\n")
 
         assert len(summary_lines) > 1  # Header + at least one data row
-        assert len(detail_lines) > 1   # Header + at least one data row
+        assert len(detail_lines) > 1  # Header + at least one data row

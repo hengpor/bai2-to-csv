@@ -73,6 +73,69 @@ pip install -e ".[dev]"
 pytest
 ```
 
+## Publishing
+
+### Prerequisites
+
+Before publishing, make sure you have:
+
+1. **PyPI Account**: Create accounts on [PyPI](https://pypi.org/account/register/) and [Test PyPI](https://test.pypi.org/account/register/)
+2. **API Tokens**: Generate API tokens for both PyPI and Test PyPI
+3. **GitHub Secrets**: Add the following secrets to your GitHub repository:
+   - `PYPI_API_TOKEN`: Your PyPI API token
+   - `TEST_PYPI_API_TOKEN`: Your Test PyPI API token
+
+### Local Publishing
+
+To build and test the package locally:
+
+```bash
+# Build and test the package
+./scripts/build_package.sh
+
+# Publish to Test PyPI (for testing)
+poetry config repositories.testpypi https://test.pypi.org/legacy/
+poetry config pypi-token.testpypi your-test-pypi-token
+poetry publish --repository testpypi
+
+# Publish to PyPI (production)
+poetry config pypi-token.pypi your-pypi-token
+poetry publish
+```
+
+### Automated Publishing
+
+The project includes automated publishing via GitHub Actions:
+
+1. **Test PyPI**: Use the "Publish to PyPI" workflow dispatch to publish to Test PyPI
+2. **Production PyPI**: Create a GitHub release to automatically publish to PyPI
+
+#### Creating a Release
+
+1. Update the version in `pyproject.toml`:
+   ```bash
+   poetry version patch  # or minor, major
+   ```
+
+2. Update the `CHANGELOG.md` with the new version
+
+3. Commit and push changes:
+   ```bash
+   git add .
+   git commit -m "Release v0.1.1"
+   git push
+   ```
+
+4. Create a GitHub release:
+   - Go to your repository on GitHub
+   - Click "Releases" → "Create a new release"
+   - Tag version: `v0.1.1`
+   - Release title: `v0.1.1`
+   - Describe the changes
+   - Click "Publish release"
+
+The GitHub Action will automatically build, test, and publish your package to PyPI.
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
