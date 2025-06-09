@@ -4,7 +4,7 @@ This module provides the main interface for converting BAI2 files to CSV format.
 """
 
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Union
 
 import pandas as pd
 
@@ -14,15 +14,15 @@ from .parsers import BaiFileParser
 class Bai2Converter:
     """Main class for converting BAI2 files to CSV format."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the BAI2 converter."""
         self.parser = BaiFileParser()
 
     def convert_file(
         self,
-        input_path: str,
-        summary_output_path: str,
-        detail_output_path: str,
+        input_path: Union[str, Path],
+        summary_output_path: Union[str, Path],
+        detail_output_path: Union[str, Path],
     ) -> Tuple[Path, Path]:
         """
         Convert a BAI2 file to two CSV files: summary and detail.
@@ -77,7 +77,7 @@ class Bai2Converter:
 
         return summary_path, detail_path
 
-    def convert_to_dataframes(self, input_path: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def convert_to_dataframes(self, input_path: Union[str, Path]) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Convert a BAI2 file to pandas DataFrames without saving to CSV.
 
