@@ -114,9 +114,7 @@ class Bai2AccountTrailerParser(Bai2SingleModelParser):
         for line in lines:
             data = line.split(",")
             if data[0] == self.code:
-                return Bai2AccountTrailer(
-                    account_control_total=data[1], number_of_records=data[2]
-                )
+                return Bai2AccountTrailer(account_control_total=data[1], number_of_records=data[2])
         return None
 
 
@@ -126,18 +124,12 @@ class Bai2TransactionSummaryParser(Bai2MultiLinesModelParser):
 
     def parse(self, lines: List[str]) -> Optional[List[Bai2TransactionSummary]]:
         account_summary_lines = self.get_transaction_summary_lines(lines)
-        customer_account, currency_code = self.get_customer_account(
-            account_summary_lines[0]
-        )
-        transaction_summary_details = self.get_transaction_summary_items(
-            account_summary_lines[1:]
-        )
+        customer_account, currency_code = self.get_customer_account(account_summary_lines[0])
+        transaction_summary_details = self.get_transaction_summary_items(account_summary_lines[1:])
         account_summary_objects = []
         for details in transaction_summary_details:
             account_summary_objects.append(
-                self.parse_transaction_summary_object(
-                    customer_account, currency_code, details
-                )
+                self.parse_transaction_summary_object(customer_account, currency_code, details)
             )
         return account_summary_objects
 
@@ -313,9 +305,7 @@ class BaiFileParser(Bai2SingleModelParser):
         return groups
 
     def split_lines_into_groups(self, lines: List[str]) -> Dict[str, List[str]]:
-        accepted_code = (
-            MultiLineCodes.group_codes.value + MultiLineCodes.account_codes.value
-        )
+        accepted_code = MultiLineCodes.group_codes.value + MultiLineCodes.account_codes.value
         return self.group_lines(
             lines,
             accepted_code,

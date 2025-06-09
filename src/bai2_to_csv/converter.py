@@ -77,7 +77,9 @@ class Bai2Converter:
 
         return summary_path, detail_path
 
-    def convert_to_dataframes(self, input_path: Union[str, Path]) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def convert_to_dataframes(
+        self, input_path: Union[str, Path]
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Convert a BAI2 file to pandas DataFrames without saving to CSV.
 
