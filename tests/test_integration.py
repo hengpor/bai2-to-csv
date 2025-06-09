@@ -1,7 +1,5 @@
 """Integration tests for the BAI2 to CSV converter."""
 
-from pathlib import Path
-
 import pandas as pd
 import pytest
 

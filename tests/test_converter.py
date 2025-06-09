@@ -1,7 +1,7 @@
 """Tests for the BAI2 to CSV converter."""
 
 from pathlib import Path
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -78,7 +78,8 @@ class TestBai2Converter:
 
         # Verify specific values from the sample file
         assert summary_df["customer_account"].iloc[0] == "1234567890"
-        # Currency code is the 4th field in the account identifier line: 03,1234567890,00000000,0,USD,10000/
+        # Currency code is the 4th field in the account identifier
+        # line: 03,1234567890,00000000,0,USD,10000/
         assert summary_df["currency_code"].iloc[0] == "USD"
 
         # Check detail DataFrame

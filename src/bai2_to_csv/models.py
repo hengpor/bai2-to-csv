@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 from pydantic import BaseModel
@@ -9,7 +9,8 @@ class RecordCode(Enum):
     """
     Record codes for BAI2 files as per the specification:
     https://developer.gs.com/docs/services/transaction-banking/bai-file/
-    Each line in the BAI2 file is identified by a record code which is located at beginning of the line.
+    Each line in the BAI2 file is identified by a record code
+    which is located at beginning of the line.
     """
 
     file_header = "01"

@@ -1,7 +1,5 @@
 """Tests for the BAI2 to CSV package __init__ module."""
 
-import pytest
-
 import bai2_to_csv
 from bai2_to_csv import (
     Bai2Converter,
