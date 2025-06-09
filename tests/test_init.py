@@ -86,11 +86,9 @@ class TestPackageImports:
     def test_direct_import_from_submodules(self):
         """Test that classes can be imported directly from their submodules."""
         from bai2_to_csv.converter import Bai2Converter as DirectConverter
-        from bai2_to_csv.models import (
-            Bai2TransactionDetail as DirectDetail,
-            Bai2TransactionSummary as DirectSummary,
-            BaiFileHeaderModel as DirectModel,
-        )
+        from bai2_to_csv.models import Bai2TransactionDetail as DirectDetail
+        from bai2_to_csv.models import Bai2TransactionSummary as DirectSummary
+        from bai2_to_csv.models import BaiFileHeaderModel as DirectModel
 
         # Test that direct imports work the same as package-level imports
         assert DirectConverter is Bai2Converter
