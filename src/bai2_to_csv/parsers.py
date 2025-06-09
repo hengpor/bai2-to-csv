@@ -182,7 +182,10 @@ class Bai2TransactionSummaryParser(Bai2MultiLinesModelParser):
 
     def get_customer_account(self, line: str) -> Tuple[str, str]:
         account_summary_info = line.split(",")
-        return account_summary_info[1], account_summary_info[2]
+        # BAI2 format for this sample: 03,customer_account,currency_code/
+        # Position 1: customer account, Position 2: currency code (with trailing slash)
+        currency_code = account_summary_info[2].rstrip("/").strip()
+        return account_summary_info[1], currency_code
 
     def get_transaction_summary_lines(self, lines: List[str]) -> List[str]:
         account_summary_lines = []
