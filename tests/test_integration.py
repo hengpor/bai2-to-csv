@@ -99,7 +99,10 @@ class TestBai2CsvIntegration:
         assert "customer_account" in detail_df.columns
 
         # Verify data consistency between summary and detail
-        assert summary_df["file_header_sender_id"].iloc[0] == detail_df["file_header_sender_id"].iloc[0]
+        assert (
+            summary_df["file_header_sender_id"].iloc[0]
+            == detail_df["file_header_sender_id"].iloc[0]
+        )
         assert summary_df["customer_account"].iloc[0] == detail_df["customer_account"].iloc[0]
 
     def test_data_preservation_through_conversion(self, sample_bai2_file, sample_csv_output_paths):
@@ -153,7 +156,7 @@ class TestBai2CsvIntegration:
 
         # Verify multiple transactions were parsed
         assert len(summary_df) == 3  # 100, 110, 270 transaction codes
-        assert len(detail_df) == 3   # 3 transaction detail records
+        assert len(detail_df) == 3  # 3 transaction detail records
 
         # Verify different transaction details
         assert "CHECK" in detail_df["bank_reference"].values
@@ -195,19 +198,19 @@ class TestBai2CsvIntegration:
         detail_content = sample_csv_output_paths["detail"].read_text()
 
         # Verify CSV structure
-        summary_lines = summary_content.strip().split('\n')
-        detail_lines = detail_content.strip().split('\n')
+        summary_lines = summary_content.strip().split("\n")
+        detail_lines = detail_content.strip().split("\n")
 
         # Check headers are present
         assert len(summary_lines) >= 2  # Header + at least one data row
-        assert len(detail_lines) >= 2   # Header + at least one data row
+        assert len(detail_lines) >= 2  # Header + at least one data row
 
         # Check comma separation
         summary_header = summary_lines[0]
         detail_header = detail_lines[0]
 
-        assert ',' in summary_header
-        assert ',' in detail_header
+        assert "," in summary_header
+        assert "," in detail_header
 
         # Verify headers contain expected fields
         assert "customer_account" in summary_header
@@ -216,14 +219,14 @@ class TestBai2CsvIntegration:
         assert "file_header_sender_id" in detail_header
 
         # Verify data rows have same number of columns as headers
-        summary_header_cols = len(summary_header.split(','))
-        detail_header_cols = len(detail_header.split(','))
+        summary_header_cols = len(summary_header.split(","))
+        detail_header_cols = len(detail_header.split(","))
 
         for line in summary_lines[1:]:  # Skip header
-            assert len(line.split(',')) == summary_header_cols
+            assert len(line.split(",")) == summary_header_cols
 
-        for line in detail_lines[1:]:   # Skip header
-            assert len(line.split(',')) == detail_header_cols
+        for line in detail_lines[1:]:  # Skip header
+            assert len(line.split(",")) == detail_header_cols
 
     def test_large_file_handling(self, tmp_path):
         """Test handling of larger BAI2 files with multiple groups and accounts."""
@@ -257,7 +260,7 @@ class TestBai2CsvIntegration:
 
         # Verify multiple groups were processed
         assert len(summary_df) == 2  # One summary per account
-        assert len(detail_df) == 2   # One detail per account
+        assert len(detail_df) == 2  # One detail per account
 
         # Verify different accounts
         accounts = detail_df["customer_account"].unique()
