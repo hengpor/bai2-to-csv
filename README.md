@@ -76,3 +76,51 @@ pytest
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+### Running Tests
+
+The project includes comprehensive unit tests, integration tests, and linting checks.
+
+#### Quick Test Run
+```bash
+# Run all tests with coverage
+python -m pytest tests/ -v --cov=src/bai2_to_csv --cov-report=term-missing
+
+# Run only unit tests
+python -m pytest tests/test_*.py -v
+
+# Run only integration tests
+python -m pytest tests/test_integration.py -v
+```
+
+#### Full CI Test Suite
+```bash
+# Run the complete test suite (same as CI)
+./scripts/run_tests.sh
+```
+
+This will run:
+- Code formatting checks (black)
+- Import sorting checks (isort)
+- Linting (flake8)
+- Type checking (mypy)
+- Unit tests with coverage reporting
+
+#### Test Coverage
+After running tests with coverage, you can view:
+- Terminal coverage report
+- HTML coverage report: `htmlcov/index.html`
+- XML coverage report: `coverage.xml`
+
+### GitHub Actions CI
+
+The project uses GitHub Actions for continuous integration. On every push and pull request, the CI will:
+
+1. **Test Matrix**: Run tests on Python 3.9, 3.10, 3.11, and 3.12
+2. **Quality Checks**: Format, imports, linting, and type checking
+3. **Unit Tests**: Complete test suite with coverage reporting
+4. **Integration Tests**: End-to-end workflow testing
+5. **Coverage Reporting**: Upload coverage to Codecov
+6. **Artifacts**: Store test results and coverage reports
+
+The CI configuration is in `.github/workflows/ci.yml`.
