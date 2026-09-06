@@ -236,9 +236,11 @@ class TestBai2Converter:
 
         converter.convert_file(str(sample_bai2_path), str(summary_path), str(detail_path))
 
-        # Read back the CSV files
-        summary_df = pd.read_csv(summary_path, dtype=str)
-        detail_df = pd.read_csv(detail_path, dtype=str)
+        # Read back the CSV files. na_filter=False keeps empty cells as "" so
+        # they stay string-typed; the default NaN would flip an object column to
+        # non-string under pandas 2.x's is_string_dtype heuristic.
+        summary_df = pd.read_csv(summary_path, dtype=str, na_filter=False)
+        detail_df = pd.read_csv(detail_path, dtype=str, na_filter=False)
 
         # Check that all columns are strings (object in pandas 2.x, StringDtype in 3.x)
         for col in summary_df.columns:
