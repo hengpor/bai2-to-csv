@@ -1,7 +1,5 @@
 """Integration tests for the BAI2 to CSV converter."""
 
-from pathlib import Path
-
 import pandas as pd
 import pytest
 
@@ -99,7 +97,10 @@ class TestBai2CsvIntegration:
         assert "customer_account" in detail_df.columns
 
         # Verify data consistency between summary and detail
-        assert summary_df["file_header_sender_id"].iloc[0] == detail_df["file_header_sender_id"].iloc[0]
+        assert (
+            summary_df["file_header_sender_id"].iloc[0]
+            == detail_df["file_header_sender_id"].iloc[0]
+        )
         assert summary_df["customer_account"].iloc[0] == detail_df["customer_account"].iloc[0]
 
     def test_data_preservation_through_conversion(self, sample_bai2_file, sample_csv_output_paths):
@@ -115,8 +116,10 @@ class TestBai2CsvIntegration:
             str(sample_csv_output_paths["detail"]),
         )
 
-        summary_df2 = pd.read_csv(sample_csv_output_paths["summary"], dtype=str)
-        detail_df2 = pd.read_csv(sample_csv_output_paths["detail"], dtype=str)
+        # na_filter=False keeps empty cells as "" instead of NaN, matching the
+        # in-memory dataframes produced by convert_to_dataframes.
+        summary_df2 = pd.read_csv(sample_csv_output_paths["summary"], dtype=str, na_filter=False)
+        detail_df2 = pd.read_csv(sample_csv_output_paths["detail"], dtype=str, na_filter=False)
 
         # Verify that both methods produce the same results
         pd.testing.assert_frame_equal(summary_df1, summary_df2, check_dtype=False)
@@ -153,7 +156,7 @@ class TestBai2CsvIntegration:
 
         # Verify multiple transactions were parsed
         assert len(summary_df) == 3  # 100, 110, 270 transaction codes
-        assert len(detail_df) == 3   # 3 transaction detail records
+        assert len(detail_df) == 3  # 3 transaction detail records
 
         # Verify different transaction details
         assert "CHECK" in detail_df["bank_reference"].values
@@ -195,19 +198,19 @@ class TestBai2CsvIntegration:
         detail_content = sample_csv_output_paths["detail"].read_text()
 
         # Verify CSV structure
-        summary_lines = summary_content.strip().split('\n')
-        detail_lines = detail_content.strip().split('\n')
+        summary_lines = summary_content.strip().split("\n")
+        detail_lines = detail_content.strip().split("\n")
 
         # Check headers are present
         assert len(summary_lines) >= 2  # Header + at least one data row
-        assert len(detail_lines) >= 2   # Header + at least one data row
+        assert len(detail_lines) >= 2  # Header + at least one data row
 
         # Check comma separation
         summary_header = summary_lines[0]
         detail_header = detail_lines[0]
 
-        assert ',' in summary_header
-        assert ',' in detail_header
+        assert "," in summary_header
+        assert "," in detail_header
 
         # Verify headers contain expected fields
         assert "customer_account" in summary_header
@@ -216,14 +219,14 @@ class TestBai2CsvIntegration:
         assert "file_header_sender_id" in detail_header
 
         # Verify data rows have same number of columns as headers
-        summary_header_cols = len(summary_header.split(','))
-        detail_header_cols = len(detail_header.split(','))
+        summary_header_cols = len(summary_header.split(","))
+        detail_header_cols = len(detail_header.split(","))
 
         for line in summary_lines[1:]:  # Skip header
-            assert len(line.split(',')) == summary_header_cols
+            assert len(line.split(",")) == summary_header_cols
 
-        for line in detail_lines[1:]:   # Skip header
-            assert len(line.split(',')) == detail_header_cols
+        for line in detail_lines[1:]:  # Skip header
+            assert len(line.split(",")) == detail_header_cols
 
     def test_large_file_handling(self, tmp_path):
         """Test handling of larger BAI2 files with multiple groups and accounts."""
@@ -236,6 +239,7 @@ class TestBai2CsvIntegration:
             "88,100,125351,1,S,125351,0,0/",
             "16,10000,0525,10000,000000000,CHECK,123456/",
             "49,10000,0525,0,0,0,1/",
+            "98,10000,0525,0,0,0,1/",
             # Group 2
             "02,BOA12345,071000040,20250525,1,,,2/",
             "03,9876543210,USD,20000/",
@@ -243,7 +247,6 @@ class TestBai2CsvIntegration:
             "16,20000,1500,20000,000000001,WIRE,654321/",
             "49,20000,1500,0,0,0,1/",
             "98,20000,1500,0,0,0,1/",
-            "98,10000,0525,0,0,0,1/",
             "99,30000,2025,0,0,0,2/",
         ]
 
@@ -257,7 +260,7 @@ class TestBai2CsvIntegration:
 
         # Verify multiple groups were processed
         assert len(summary_df) == 2  # One summary per account
-        assert len(detail_df) == 2   # One detail per account
+        assert len(detail_df) == 2  # One detail per account
 
         # Verify different accounts
         accounts = detail_df["customer_account"].unique()

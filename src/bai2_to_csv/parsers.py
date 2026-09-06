@@ -18,6 +18,15 @@ from .models import (
 )
 
 
+def _split_line(line: str) -> List[str]:
+    """Split a BAI2 record and clean each field.
+
+    Fields may carry the BAI2 end-of-record ``/`` marker and trailing whitespace
+    (including line separators). Stripping both here keeps every parser simple.
+    """
+    return [field.strip().rstrip("/") for field in line.split(",")]
+
+
 class Bai2ParserBase(abc.ABC):
     code = None
 
@@ -43,7 +52,7 @@ class Bai2FileHeaderParser(Bai2SingleModelParser):
 
     def parse(self, lines: List[str]) -> Optional[Bai2FileHeader]:
         for line in lines:
-            data = line.split(",")
+            data = _split_line(line)
             if data[0] == self.code:
                 return Bai2FileHeader(
                     sender_id=data[1],
@@ -63,7 +72,7 @@ class Bai2FileTrailerParser(Bai2SingleModelParser):
 
     def parse(self, lines: List[str]) -> Optional[Bai2FileTrailer]:
         for line in lines:
-            data = line.split(",")
+            data = _split_line(line)
             if data[0] == self.code:
                 return Bai2FileTrailer(
                     file_control_total=data[1],
@@ -78,7 +87,7 @@ class Bai2GroupHeaderParser(Bai2SingleModelParser):
 
     def parse(self, lines: List[str]) -> Optional[Bai2GroupHeader]:
         for line in lines:
-            data = line.split(",")
+            data = _split_line(line)
             if data[0] == self.code:
                 return Bai2GroupHeader(
                     receiver_id=data[1],
@@ -97,7 +106,7 @@ class Bai2GroupTrailerParser(Bai2SingleModelParser):
 
     def parse(self, lines: List[str]) -> Optional[Bai2GroupTrailer]:
         for line in lines:
-            data = line.split(",")
+            data = _split_line(line)
             if data[0] == self.code:
                 return Bai2GroupTrailer(
                     group_control_total=data[1],
@@ -112,11 +121,9 @@ class Bai2AccountTrailerParser(Bai2SingleModelParser):
 
     def parse(self, lines: List[str]) -> Optional[Bai2AccountTrailer]:
         for line in lines:
-            data = line.split(",")
+            data = _split_line(line)
             if data[0] == self.code:
-                return Bai2AccountTrailer(
-                    account_control_total=data[1], number_of_records=data[2]
-                )
+                return Bai2AccountTrailer(account_control_total=data[1], number_of_records=data[2])
         return None
 
 
@@ -126,18 +133,12 @@ class Bai2TransactionSummaryParser(Bai2MultiLinesModelParser):
 
     def parse(self, lines: List[str]) -> Optional[List[Bai2TransactionSummary]]:
         account_summary_lines = self.get_transaction_summary_lines(lines)
-        customer_account, currency_code = self.get_customer_account(
-            account_summary_lines[0]
-        )
-        transaction_summary_details = self.get_transaction_summary_items(
-            account_summary_lines[1:]
-        )
+        customer_account, currency_code = self.get_customer_account(account_summary_lines[0])
+        transaction_summary_details = self.get_transaction_summary_items(account_summary_lines[1:])
         account_summary_objects = []
         for details in transaction_summary_details:
             account_summary_objects.append(
-                self.parse_transaction_summary_object(
-                    customer_account, currency_code, details
-                )
+                self.parse_transaction_summary_object(customer_account, currency_code, details)
             )
         return account_summary_objects
 
@@ -159,7 +160,7 @@ class Bai2TransactionSummaryParser(Bai2MultiLinesModelParser):
     def get_transaction_summary_items(self, lines: List[str]) -> List[Dict[str, str]]:
         transaction_details = []
         for line in lines:
-            data = line.split(",")
+            data = _split_line(line)
             fund_available_immediately = None
             fund_available_in_one_day = None
             fund_available_in_two_days = None
@@ -181,16 +182,14 @@ class Bai2TransactionSummaryParser(Bai2MultiLinesModelParser):
         return transaction_details
 
     def get_customer_account(self, line: str) -> Tuple[str, str]:
-        account_summary_info = line.split(",")
-        # BAI2 format for this sample: 03,customer_account,currency_code/
-        # Position 1: customer account, Position 2: currency code (with trailing slash)
-        currency_code = account_summary_info[2].rstrip("/").strip()
-        return account_summary_info[1], currency_code
+        # BAI2 03 record: 03,customer_account,currency_code/
+        data = _split_line(line)
+        return data[1], data[2]
 
     def get_transaction_summary_lines(self, lines: List[str]) -> List[str]:
         account_summary_lines = []
         for line in lines:
-            data = line.split(",")
+            data = _split_line(line)
             if data[0] == self.code or data[0] == self.continue_code:
                 account_summary_lines.append(line)
             if data[0] == self.end_code:
@@ -226,7 +225,7 @@ class Bai2TransactionDetailParser(Bai2TransactionSummaryParser):
         fund_available_in_one_day = None
         fund_available_in_two_days = None
         for line in lines:
-            data = line.split(",")
+            data = _split_line(line)
             if data[0] == self.code:
                 transaction_bai_code = data[1]
                 amount = data[2]
@@ -258,7 +257,7 @@ class Bai2TransactionDetailParser(Bai2TransactionSummaryParser):
         groups = {}
         index = 0
         for line in lines:
-            data = line.split(",")
+            data = _split_line(line)
             if data[0] == self.end_code:
                 break
             if data[0] == self.code:
@@ -273,7 +272,7 @@ class Bai2TransactionDetailParser(Bai2TransactionSummaryParser):
         transaction_lines = []
         is_in_transaction_detail_block = False
         for line in lines:
-            data = line.split(",")
+            data = _split_line(line)
             if data[0] == self.end_code:
                 break
             if data[0] == self.code:
@@ -294,33 +293,33 @@ class BaiFileParser(Bai2SingleModelParser):
         accepted_codes: List[str],
         initial_code: str,
         break_code: str,
+        key_prefix: str = "group",
     ) -> Dict[str, List[str]]:
-        groups = {}
-        index = 0
-        lines = lines[1:]  # skip the header line
-        for line in lines:
-            data = line.split(",")
-            if data[0] == break_code:
-                break
+        # Skip the enclosing header line (file header for groups, group header for
+        # accounts). Every subsequent record whose code is in accepted_codes is
+        # attached to the current group; lines outside accepted_codes are skipped,
+        # which makes break_code redundant at runtime but kept for API stability.
+        del break_code
+        groups: Dict[str, List[str]] = {}
+        index = -1
+        for line in lines[1:]:
+            data = _split_line(line)
             if data[0] == initial_code:
-                # beginning of new group
                 index += 1
-            key = f"key_{index}"
-            if data[0] in accepted_codes:
-                if key not in groups:
-                    groups[key] = []
-                groups[key].append(line)
+            if index < 0 or data[0] not in accepted_codes:
+                continue
+            key = f"{key_prefix}_{index}"
+            groups.setdefault(key, []).append(line)
         return groups
 
     def split_lines_into_groups(self, lines: List[str]) -> Dict[str, List[str]]:
-        accepted_code = (
-            MultiLineCodes.group_codes.value + MultiLineCodes.account_codes.value
-        )
+        accepted_code = MultiLineCodes.group_codes.value + MultiLineCodes.account_codes.value
         return self.group_lines(
             lines,
             accepted_code,
             RecordCode.group_header.value,
             RecordCode.file_trailer.value,
+            key_prefix="group",
         )
 
     def split_lines_into_accounts(self, lines: List[str]) -> Dict[str, List[str]]:
@@ -329,6 +328,7 @@ class BaiFileParser(Bai2SingleModelParser):
             MultiLineCodes.account_codes.value,
             RecordCode.account_identifier.value,
             RecordCode.group_trailer.value,
+            key_prefix="account",
         )
 
     def parse_account_models(self, account_lines: List[str]) -> BaiAccountModel:

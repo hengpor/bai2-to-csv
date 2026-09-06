@@ -1,7 +1,5 @@
 """Shared pytest fixtures and configuration for BAI2 to CSV tests."""
 
-from pathlib import Path
-
 import pytest
 
 

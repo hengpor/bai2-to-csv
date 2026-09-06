@@ -1,15 +1,15 @@
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 from pydantic import BaseModel
 
 
 class RecordCode(Enum):
-    """
-    Record codes for BAI2 files as per the specification:
-    https://developer.gs.com/docs/services/transaction-banking/bai-file/
-    Each line in the BAI2 file is identified by a record code which is located at beginning of the line.
+    """Record codes for BAI2 files as per the specification.
+
+    See https://developer.gs.com/docs/services/transaction-banking/bai-file/.
+    Each line in a BAI2 file is identified by the record code at the start.
     """
 
     file_header = "01"
@@ -82,9 +82,9 @@ class Bai2TransactionSummary(ConfiguredBaseModel):
     amount: str
     transaction_code: str
     transaction_type: str
-    fund_available_immediately: Optional[str]
-    fund_available_in_one_day: Optional[str]
-    fund_available_in_two_days: Optional[str]
+    fund_available_immediately: Optional[str] = None
+    fund_available_in_one_day: Optional[str] = None
+    fund_available_in_two_days: Optional[str] = None
 
 
 class Bai2TransactionDetail(ConfiguredBaseModel):
@@ -96,9 +96,9 @@ class Bai2TransactionDetail(ConfiguredBaseModel):
     bank_reference: str
     customer_reference: str
     transaction_text: str
-    fund_available_immediately: Optional[str]
-    fund_available_in_one_day: Optional[str]
-    fund_available_in_two_days: Optional[str]
+    fund_available_immediately: Optional[str] = None
+    fund_available_in_one_day: Optional[str] = None
+    fund_available_in_two_days: Optional[str] = None
 
 
 class BaiAccountModel(ConfiguredBaseModel):
@@ -138,16 +138,10 @@ class BaiFileHeaderModel(ConfiguredBaseModel):
         transaction_summaries = []
         transaction_details = []
         transformed_file_header = self.model_transform(self.file_header, "file_header_")
-        transformed_file_trailer = self.model_transform(
-            self.file_trailer, "file_trailer_"
-        )
+        transformed_file_trailer = self.model_transform(self.file_trailer, "file_trailer_")
         for group in self.group_headers:
-            transformed_group_header = self.model_transform(
-                group.group_header, "group_header_"
-            )
-            transformed_group_trailer = self.model_transform(
-                group.group_trailer, "group_trailer_"
-            )
+            transformed_group_header = self.model_transform(group.group_header, "group_header_")
+            transformed_group_trailer = self.model_transform(group.group_trailer, "group_trailer_")
             for account in group.accounts:
                 transformed_account_trailer = self.model_transform(
                     group.group_trailer, "account_trailer_"

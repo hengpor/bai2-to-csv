@@ -195,9 +195,7 @@ class TestBai2AccountTrailer:
 
     def test_valid_account_trailer(self):
         """Test creating a valid account trailer."""
-        trailer = Bai2AccountTrailer(
-            account_control_total="10000", number_of_records="0525"
-        )
+        trailer = Bai2AccountTrailer(account_control_total="10000", number_of_records="0525")
         assert trailer.account_control_total == "10000"
         assert trailer.number_of_records == "0525"
 
