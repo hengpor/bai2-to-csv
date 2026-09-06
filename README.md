@@ -1,5 +1,10 @@
 # BAI2 to CSV Converter
 
+[![CI](https://github.com/hengpor/bai2-to-csv/actions/workflows/ci.yml/badge.svg)](https://github.com/hengpor/bai2-to-csv/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/bai2-to-csv.svg)](https://pypi.org/project/bai2-to-csv/)
+[![Python](https://img.shields.io/pypi/pyversions/bai2-to-csv.svg)](https://pypi.org/project/bai2-to-csv/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Python library for converting Bank Administration Institute (BAI2) files to CSV format. This library provides a simple way to parse BAI2 files and convert them into two CSV files: one for transaction summaries and another for transaction details.
 
 ## Installation
@@ -72,6 +77,15 @@ pip install -e ".[dev]"
 # Run tests
 pytest
 ```
+
+## Reporting issues
+
+Found a bug or have a feature request? Please open an issue: https://github.com/hengpor/bai2-to-csv/issues
+
+- **Bug report** — use the "Bug report" template. Include a minimal BAI2 snippet (redact real account numbers), the code you ran, and the traceback.
+- **Feature request** — use the "Feature request" template.
+
+For open-ended questions, use [Discussions](https://github.com/hengpor/bai2-to-csv/discussions) instead.
 
 ## License
 

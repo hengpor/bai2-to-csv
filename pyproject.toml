@@ -17,6 +17,12 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
+
+[project.urls]
+Homepage = "https://github.com/hengpor/bai2-to-csv"
+Repository = "https://github.com/hengpor/bai2-to-csv"
+Issues = "https://github.com/hengpor/bai2-to-csv/issues"
+Changelog = "https://github.com/hengpor/bai2-to-csv/releases"
 dependencies = [
     "pydantic>=2.11.5",
     "pydantic-core>=2.33.2",

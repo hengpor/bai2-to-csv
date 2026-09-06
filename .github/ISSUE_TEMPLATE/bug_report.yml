@@ -1,0 +1,87 @@
+name: Bug report
+description: A conversion is producing wrong output, a crash, or a regression.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. The more concrete
+        details you can give us, the faster we can reproduce and fix it.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead?
+      placeholder: |
+        I called Bai2Converter.convert_file(...) on the attached file and got
+        empty CSVs / a crash / rows with the wrong currency_code, ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: |
+        The exact code you ran, plus (ideally) a small BAI2 snippet that
+        triggers the problem. Wrap code in triple backticks.
+      placeholder: |
+        ```python
+        from bai2_to_csv import Bai2Converter
+        Bai2Converter().convert_file("in.bai", "summary.csv", "detail.csv")
+        ```
+
+        BAI2 input (redact any real account numbers):
+        ```
+        01,000000610,BOA12345,20250525,1400,1,80,1,2/
+        ...
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the full error / traceback if there was one.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: bai2-to-csv version
+      placeholder: "0.1.0 (run: pip show bai2-to-csv)"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "3.11.9 (run: python --version)"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "macOS 14.5 / Ubuntu 22.04 / Windows 11"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Anything else that might help — screenshots, related issues, workarounds you tried.
