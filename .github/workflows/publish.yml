@@ -1,0 +1,71 @@
+name: Publish to PyPI
+
+# Publishes bai2-to-csv to PyPI when a GitHub Release is published.
+#
+# Auth is PyPI Trusted Publishing (OIDC) — no API token needed. One-time setup:
+#   1. Create the project on PyPI (or add it as a Pending Publisher).
+#   2. On PyPI, add a Trusted Publisher with:
+#        Owner:       hengpor
+#        Repository:  bai2-to-csv
+#        Workflow:    publish.yml
+#        Environment: pypi
+#   3. In this repo, create a GitHub Environment named "pypi" (Settings →
+#      Environments). Optionally add required reviewers as a manual gate.
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Verify version matches release tag
+        run: |
+          pkg_version=$(poetry version --short)
+          tag_version="${GITHUB_REF_NAME#v}"
+          if [ "$pkg_version" != "$tag_version" ]; then
+            echo "::error::pyproject.toml version ($pkg_version) does not match release tag ($tag_version)"
+            exit 1
+          fi
+
+      - name: Build sdist and wheel
+        run: poetry build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: pypi
+      url: https://pypi.org/p/bai2-to-csv
+    permissions:
+      id-token: write  # required for OIDC trusted publishing
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
