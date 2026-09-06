@@ -61,11 +61,15 @@ jobs:
           retention-days: 30
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: matrix.python-version == '3.11'
         with:
           files: ./coverage.xml
-          fail_ci_if_error: true
+          # Tokenless uploads no longer work on protected branches. Set
+          # CODECOV_TOKEN in repo secrets to enable uploads; without it the
+          # step still runs but does not fail CI.
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
           verbose: true
 
       - name: Comment coverage on PR
