@@ -1,5 +1,5 @@
 import abc
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, TypeVar
 
 from .models import (
     Bai2AccountTrailer,
@@ -12,7 +12,6 @@ from .models import (
     BaiAccountModel,
     BaiFileHeaderModel,
     BaiGroupModel,
-    BaseModel,
     MultiLineCodes,
     RecordCode,
 )
@@ -27,11 +26,30 @@ def _split_line(line: str) -> List[str]:
     return [field.strip().rstrip("/") for field in line.split(",")]
 
 
-class Bai2ParserBase(abc.ABC):
-    code = None
+T = TypeVar("T")
 
-    def parse(self, lines: List[str]) -> Optional[BaseModel]:
-        raise NotImplementedError("Method not implemented")
+
+def _require(value: Optional[T], record_code: str) -> T:
+    """Assert a parser produced a value for a required BAI2 record."""
+    if value is None:
+        raise ValueError(f"BAI2 record {record_code!r} is missing or unparseable")
+    return value
+
+
+def _parse_account_header(line: str) -> Tuple[str, str]:
+    """Extract customer_account and currency_code from an 03 account line."""
+    data = _split_line(line)
+    return data[1], data[2]
+
+
+class Bai2ParserBase(abc.ABC):
+    """Marker base for BAI2 parsers.
+
+    Concrete subclasses define their own ``parse`` method; the return type
+    varies (single model vs. list of models) so no shared signature is enforced.
+    """
+
+    code: Optional[str] = None
 
 
 class Bai2SingleModelParser(Bai2ParserBase, abc.ABC):
@@ -39,12 +57,9 @@ class Bai2SingleModelParser(Bai2ParserBase, abc.ABC):
 
 
 class Bai2MultiLinesModelParser(Bai2ParserBase, abc.ABC):
-    code = None
+    code: Optional[str] = None
     continue_code = RecordCode.continuation.value
-    end_code = None
-
-    def parse(self, lines: List[str]) -> Optional[List[BaseModel]]:
-        raise NotImplementedError("Method not implemented")
+    end_code: Optional[str] = None
 
 
 class Bai2FileHeaderParser(Bai2SingleModelParser):
@@ -133,7 +148,7 @@ class Bai2TransactionSummaryParser(Bai2MultiLinesModelParser):
 
     def parse(self, lines: List[str]) -> Optional[List[Bai2TransactionSummary]]:
         account_summary_lines = self.get_transaction_summary_lines(lines)
-        customer_account, currency_code = self.get_customer_account(account_summary_lines[0])
+        customer_account, currency_code = _parse_account_header(account_summary_lines[0])
         transaction_summary_details = self.get_transaction_summary_items(account_summary_lines[1:])
         account_summary_objects = []
         for details in transaction_summary_details:
@@ -143,22 +158,25 @@ class Bai2TransactionSummaryParser(Bai2MultiLinesModelParser):
         return account_summary_objects
 
     def parse_transaction_summary_object(
-        self, customer_acc: str, currency_code: str, details: Dict[str, str]
-    ) -> Optional[Bai2TransactionSummary]:
+        self,
+        customer_acc: str,
+        currency_code: str,
+        details: Dict[str, Optional[str]],
+    ) -> Bai2TransactionSummary:
         return Bai2TransactionSummary(
             customer_account=customer_acc,
             currency_code=currency_code,
-            transaction_bai_code=details["transaction_bai_code"],
-            amount=details["amount"],
-            transaction_code=details["transaction_code"],
-            transaction_type=details["transaction_type"],
+            transaction_bai_code=_require(details["transaction_bai_code"], "88 (bai_code)"),
+            amount=_require(details["amount"], "88 (amount)"),
+            transaction_code=_require(details["transaction_code"], "88 (transaction_code)"),
+            transaction_type=_require(details["transaction_type"], "88 (transaction_type)"),
             fund_available_immediately=details["fund_available_immediately"],
             fund_available_in_one_day=details["fund_available_in_one_day"],
             fund_available_in_two_days=details["fund_available_in_two_days"],
         )
 
-    def get_transaction_summary_items(self, lines: List[str]) -> List[Dict[str, str]]:
-        transaction_details = []
+    def get_transaction_summary_items(self, lines: List[str]) -> List[Dict[str, Optional[str]]]:
+        transaction_details: List[Dict[str, Optional[str]]] = []
         for line in lines:
             data = _split_line(line)
             fund_available_immediately = None
@@ -182,9 +200,7 @@ class Bai2TransactionSummaryParser(Bai2MultiLinesModelParser):
         return transaction_details
 
     def get_customer_account(self, line: str) -> Tuple[str, str]:
-        # BAI2 03 record: 03,customer_account,currency_code/
-        data = _split_line(line)
-        return data[1], data[2]
+        return _parse_account_header(line)
 
     def get_transaction_summary_lines(self, lines: List[str]) -> List[str]:
         account_summary_lines = []
@@ -197,14 +213,14 @@ class Bai2TransactionSummaryParser(Bai2MultiLinesModelParser):
         return account_summary_lines
 
 
-class Bai2TransactionDetailParser(Bai2TransactionSummaryParser):
+class Bai2TransactionDetailParser(Bai2MultiLinesModelParser):
     code = RecordCode.transaction_detail.value
     end_code = RecordCode.account_trailer.value
 
     def parse(self, lines: List[str]) -> Optional[List[Bai2TransactionDetail]]:
         transaction_lines = self.get_transaction_lines(lines)
         group_lines = self.group_lines_into_transaction(transaction_lines)
-        customer_account, currency_code = self.get_customer_account(lines[0])
+        customer_account, currency_code = _parse_account_header(lines[0])
         transaction_obj = []
         for _, group in group_lines.items():
             transaction_obj.append(
@@ -215,15 +231,15 @@ class Bai2TransactionDetailParser(Bai2TransactionSummaryParser):
     def parse_group_to_transaction(
         self, lines: List[str], customer_account: str, currency_code: str
     ) -> Bai2TransactionDetail:
-        texts = []
-        transaction_bai_code = None
-        amount = None
-        fund_type = None
-        bank_reference = None
-        customer_reference = None
-        fund_available_immediately = None
-        fund_available_in_one_day = None
-        fund_available_in_two_days = None
+        texts: List[str] = []
+        transaction_bai_code: Optional[str] = None
+        amount: Optional[str] = None
+        fund_type: Optional[str] = None
+        bank_reference: Optional[str] = None
+        customer_reference: Optional[str] = None
+        fund_available_immediately: Optional[str] = None
+        fund_available_in_one_day: Optional[str] = None
+        fund_available_in_two_days: Optional[str] = None
         for line in lines:
             data = _split_line(line)
             if data[0] == self.code:
@@ -242,11 +258,11 @@ class Bai2TransactionDetailParser(Bai2TransactionSummaryParser):
         return Bai2TransactionDetail(
             customer_account=customer_account,
             currency_code=currency_code,
-            transaction_bai_code=transaction_bai_code,
-            amount=amount,
-            fund_type=fund_type,
-            bank_reference=bank_reference,
-            customer_reference=customer_reference,
+            transaction_bai_code=_require(transaction_bai_code, "16 (bai_code)"),
+            amount=_require(amount, "16 (amount)"),
+            fund_type=_require(fund_type, "16 (fund_type)"),
+            bank_reference=_require(bank_reference, "16 (bank_reference)"),
+            customer_reference=_require(customer_reference, "16 (customer_reference)"),
             transaction_text=transaction_text,
             fund_available_immediately=fund_available_immediately,
             fund_available_in_one_day=fund_available_in_one_day,
@@ -254,7 +270,7 @@ class Bai2TransactionDetailParser(Bai2TransactionSummaryParser):
         )
 
     def group_lines_into_transaction(self, lines: List[str]) -> Dict[str, List[str]]:
-        groups = {}
+        groups: Dict[str, List[str]] = {}
         index = 0
         for line in lines:
             data = _split_line(line)
@@ -336,9 +352,9 @@ class BaiFileParser(Bai2SingleModelParser):
         transaction_detail = Bai2TransactionDetailParser().parse(account_lines)
         account_trailer = Bai2AccountTrailerParser().parse(account_lines)
         return BaiAccountModel(
-            transaction_summary=transaction_summary,
-            transaction_detail=transaction_detail,
-            account_trailer=account_trailer,
+            transaction_summary=_require(transaction_summary, "account transaction summaries"),
+            transaction_detail=_require(transaction_detail, "account transaction details"),
+            account_trailer=_require(account_trailer, "49 (account trailer)"),
         )
 
     def parse_group_models(self, group_lines: List[str]) -> BaiGroupModel:
@@ -346,14 +362,16 @@ class BaiFileParser(Bai2SingleModelParser):
         for _, account in self.split_lines_into_accounts(group_lines).items():
             accounts.append(self.parse_account_models(account))
         return BaiGroupModel(
-            group_header=Bai2GroupHeaderParser().parse(group_lines),
-            group_trailer=Bai2GroupTrailerParser().parse(group_lines),
+            group_header=_require(Bai2GroupHeaderParser().parse(group_lines), "02 (group header)"),
+            group_trailer=_require(
+                Bai2GroupTrailerParser().parse(group_lines), "98 (group trailer)"
+            ),
             accounts=accounts,
         )
 
     def parse_file_model(self, lines: List[str]) -> BaiFileHeaderModel:
-        file_header = Bai2FileHeaderParser().parse(lines)
-        file_trailer = Bai2FileTrailerParser().parse(lines)
+        file_header = _require(Bai2FileHeaderParser().parse(lines), "01 (file header)")
+        file_trailer = _require(Bai2FileTrailerParser().parse(lines), "99 (file trailer)")
         groups = []
         for _, group in self.split_lines_into_groups(lines).items():
             groups.append(self.parse_group_models(group))
