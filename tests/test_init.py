@@ -25,6 +25,7 @@ class TestPackageImports:
             "Bai2TransactionDetail",
             "Bai2TransactionSummary",
             "BaiFileHeaderModel",
+            "load_code_mapping",
         ]
 
         assert hasattr(bai2_to_csv, "__all__")

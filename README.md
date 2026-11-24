@@ -37,6 +37,33 @@ The converter will create two CSV files:
 1. A transaction summary file containing aggregated transaction information
 2. A transaction detail file containing individual transaction records
 
+### Transaction code descriptions
+
+Pass a mapping of BAI transaction codes to text, and a `transaction_description`
+column is added right after `transaction_bai_code` in both CSVs. Codes with no
+entry in the mapping get an empty description.
+
+```python
+converter = Bai2Converter(code_mapping="codes.csv")   # or "codes.json", or a dict
+```
+
+CSV: needs a header row with `code` and `text` columns. The columns can be in any order, and any extra columns are ignored.
+
+```csv
+code,text
+100,Total Credits
+270,Total Debits
+```
+
+JSON: a single object of code → text.
+
+```json
+{"100": "Total Credits", "270": "Total Debits"}
+```
+
+Codes are compared as strings, so `"010"` and `"10"` are different codes. Use
+`load_code_mapping(path)` to load and validate a mapping file yourself.
+
 ## Output Format
 
 ### Transaction Summary CSV

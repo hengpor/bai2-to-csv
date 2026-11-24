@@ -4,19 +4,32 @@ This module provides the main interface for converting BAI2 files to CSV format.
 """
 
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import pandas as pd
 
+from .mapping import CodeMappingSource, apply_code_mapping, resolve_code_mapping
 from .parsers import BaiFileParser
 
 
 class Bai2Converter:
     """Main class for converting BAI2 files to CSV format."""
 
-    def __init__(self) -> None:
-        """Initialize the BAI2 converter."""
+    def __init__(self, code_mapping: Optional[CodeMappingSource] = None) -> None:
+        """
+        Initialize the BAI2 converter.
+
+        Args:
+            code_mapping: Optional transaction code -> text mapping, given as a path to a
+                ``.csv``/``.json`` file or as a dict. When set, a ``transaction_description``
+                column is added after ``transaction_bai_code`` in both outputs.
+
+        Raises:
+            FileNotFoundError: If the mapping file doesn't exist
+            ValueError: If the mapping is invalid
+        """
         self.parser = BaiFileParser()
+        self.code_mapping = resolve_code_mapping(code_mapping)
 
     def convert_file(
         self,
@@ -81,7 +94,11 @@ class Bai2Converter:
             raise ValueError(f"Failed to parse BAI2 file: {str(e)}")
 
         summary_df, detail_df = bai_model.transform_to_dataframes()
-        return self._normalize(summary_df), self._normalize(detail_df)
+        summary_df, detail_df = self._normalize(summary_df), self._normalize(detail_df)
+        if self.code_mapping is not None:
+            summary_df = apply_code_mapping(summary_df, self.code_mapping)
+            detail_df = apply_code_mapping(detail_df, self.code_mapping)
+        return summary_df, detail_df
 
     @staticmethod
     def _normalize(df: pd.DataFrame) -> pd.DataFrame:
